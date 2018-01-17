@@ -1,5 +1,5 @@
 /****************************************************************************/
-/*  GABOR signal processing program.                                        */
+/*  GABOR msignal processing program.                                        */
 /* (C) 2001 Copyright Johns Hopkins University, All Right Reserved.         */
 /*                                                                          */
 /*  Christophe JOUNY: Based on Mallat/Zhang sources for Matching Pursuit    */
@@ -12,7 +12,7 @@
 /****************************************************************************/
 /*                                                                          */
 /*  gabord.c         Matching Pursuit decomposition adapted for processing  */
-/*                   multiple signals and long datasets                     */
+/*                   multiple msignals and long datasets                     */
 /*                                                                          */
 /****************************************************************************/
 
@@ -50,10 +50,10 @@ extern int cur_inp;
 
 /*--------------------------------------------------------------------------*/
 
-double *values=(double *)NULL;	//values of signal (temp var.)
+double *values=(double *)NULL;	//values of msignal (temp var.)
 
-SIGNAL signal=(SIGNAL)NULL;  	//signal
-SIGNAL sigtmp=(SIGNAL)NULL;		//signal temp for decomp.
+SIGNAL msignal=(SIGNAL)NULL;  	//msignal
+SIGNAL sigtmp=(SIGNAL)NULL;		//mmmsignal temp for decomp.
 SIGNAL sigtmpi=(SIGNAL)NULL;	//    idem
 
 double *cur_norm; // = (double *)NULL;
@@ -78,11 +78,11 @@ BOOK library[MAX_NUM_SB];
 //BOOK cur_book;
 /* previous book */
 BOOK old_cur_book;
-/* array of signals */
-SIGNAL signals[MAX_NUM_SIGNAL];
-/* current signal */
-SIGNAL cur_signal;
-/* current signal size */
+/* array of msignals */
+SIGNAL msignals[MAX_NUM_SIGNAL];
+/* current msignal */
+SIGNAL cur_msignal;
+/* current msignal size */
 int cur_sig_size=0;
 /* filters */
 SIGNAL * filter[MAX_NUM_SB];
@@ -111,7 +111,7 @@ int old_cur_TransAlloc = 0;
 SIGNAL temporary;
 /*  level of decomposition */
 int octave_decomp = 0;
-/*  size of the courant signal */
+/*  size of the courant msignal */
 int SignalSize = 0;
 /*  Constants defining the subsampling and dilatation rates */
 int ln2_subsampling = 0;
@@ -131,7 +131,7 @@ int main(argc, argv)
      char **argv;
 	{
     int ShiftOctave=0;
-    int SigSize;							//size of the signal analyzed
+    int SigSize;							//size of the msignal analyzed
     int LnSigSize;							// power of 2 = to this size
     int SubsampleOctaveTime=2;
     int SubsampleOctaveFreq = 2;
@@ -154,7 +154,7 @@ int main(argc, argv)
     int lndata, half_lndata, Lnlndata;	// length of data required by user, half of that and power of two
     //int blocksize;						// length of data block
     
-    int sigN;							// signal size
+    int sigN;							// msignal size
 	int nbinp;
 
     double *data;
@@ -286,15 +286,15 @@ int main(argc, argv)
         library[i] = AllocBook();
         library[i]->id=i;
 		}
-/* allocation of signals  */
+/* allocation of msignals  */
 	for (i=0;i<MAX_NUM_SIGNAL;i++)
-        signals[i] = new_struct_signal();
+        msignals[i] = new_struct_signal();
 	
 /*cur_book = library[0];*/
 	old_cur_book = cur_book;
 
-/* assign the current signal */
-	cur_signal = signals[0];
+/* assign the current msignal */
+	cur_msignal = msignals[0];
 
 
 	temporary = new_struct_signal();
@@ -308,7 +308,7 @@ int main(argc, argv)
 
 ////
 
-	signal = new_signal(sig_size);
+	msignal = new_signal(sig_size);
 
 	Lnlndata = find2power(lndata);
 	lndata = 1<<Lnlndata;
@@ -344,22 +344,22 @@ int main(argc, argv)
 		for (ichan=0; ichan<nb_chan; ichan++)
 			{
 
-			signal->size_alloca = sig_size;
-			signal->size = lndata;
-			signal->shift = 0;
-			signal->scale = 1;
-			signal->firstp = 0;
-			signal->lastp= signal->size - 1;
-			signal->param = 1;
+			msignal->size_alloca = sig_size;
+			msignal->size = lndata;
+			msignal->shift = 0;
+			msignal->scale = 1;
+			msignal->firstp = 0;
+			msignal->lastp= msignal->size - 1;
+			msignal->param = 1;
 
 			//Read Channel Data
-			nbc=get_double_chan(in+nbinp, signal->values, n, ichan);
+			nbc=get_double_chan(in+nbinp, msignal->values, n, ichan);
 
-  			sig_add_num(signal, -1*sig_mean(signal));		// substract mean to center around zero
+  			sig_add_num(msignal, -1*sig_mean(msignal));		// substract mean to center around zero
 
-			orgN = (double) signal->size;
-			sigN = signal->size;
-			LnSigSize = find2power(signal->size);
+			orgN = (double) msignal->size;
+			sigN = msignal->size;
+			LnSigSize = find2power(msignal->size);
 			cur_MaxOctave = LnSigSize - 1;
 			cur_SOT=1; cur_SOF=1;
 			ShiftOctave = 0;
@@ -373,17 +373,17 @@ int main(argc, argv)
     			SOF_build = cur_SOF + 2;
 
 		    	SigSize = 1<<LnSigSize;
-    			if (SigSize != sigN)         				       // signal resize to a power of 2
+    			if (SigSize != sigN)         				       // msignal resize to a power of 2
 				{
    				values=(double *)malloc(sizeof(double)*sigN);
 		    		if (values  ==(double *)NULL)
 					perror("GDecomp(): mem. alloc. failed!");
-				farray_copy(signal->values,sigN,values);
-				change_signal(signal,SigSize);
+				farray_copy(msignal->values,sigN,values);
+				change_signal(msignal,SigSize);
 				for (i=0;i<sigN;i++)
-		    			signal->values[i] = values[i];
+		    			msignal->values[i] = values[i];
 				for (i=SigSize;i<sigN;i++)
-	    				signal->values[i] = 0.0;
+	    				msignal->values[i] = 0.0;
 				free((char *)values);
 				sigN = SigSize;
 				}
@@ -426,7 +426,7 @@ int main(argc, argv)
 				change_signal(sigtmp,SigSize<<1);
 
 		    	for (i=0;i<SigSize;i++)
-				sigtmp->values[i] = signal->values[i];
+				sigtmp->values[i] = msignal->values[i];
 				
 		    	cur_transform = GaborDecomp(cur_transform,sigtmp,cur_filter,
 					SubsampleOctaveTime,SubsampleOctaveFreq,
@@ -440,7 +440,7 @@ int main(argc, argv)
 			    cur_SOT = SubsampleOctaveTime;
 			    cur_SOF = SubsampleOctaveFreq;
 			    cur_sig_size = SigSize;
-			    cur_signal = signal;
+			    cur_msignal = msignal;
 
 /*--------------------------------------------------------------------------*/
 /*--------------------------------------------------------------------------*/
@@ -548,7 +548,7 @@ int main(argc, argv)
 /* compute the lamda square for white noise */
 
 		    if (SigEng < 0.0)
-				perror("GaborBuildBook(): empty signal!");
+				perror("GaborBuildBook(): empty msignal!");
 		    if (cur_l != 3 || cur_h != 3)
 				LamdaNoise = 0.0; /* this lambda is not available yet */
 		    else
